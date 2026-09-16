@@ -30,6 +30,9 @@
 - 无头截图（Edge）：`--headless=new --no-sandbox --disable-gpu --force-device-scale-factor=2 --virtual-time-budget=6000 --window-size=W,H --screenshot=<绝对路径> "file:///<绝对路径>"`，2x 图，CSS 尺寸除 2。
 - 校验中文文案：minify 非 ASCII 转义，`·` 走 `\xB7`、更靠后的走 `\uXXXX`，两种都要反转义再 `includes()`（大小写不敏感）。
 - 看截图：无 PIL，用纯 python + zlib 手写 PNG 解码；脚本在 `.workbuddy/tmp/`。
+- **本地 `main.js` 比 CI/Release 大 6091 字节 ≠ 构建不一致**：`core.autocrlf=true` 让工作区的 `src/mxClient.min.js` 与内联 `.xml` 变 CRLF，`JSON.stringify` 每个 CR 多 1 字节（每行共 +2）。esbuild 自身输出是 LF（`main.js` CR=0/LF=3140）。核对同一份构建看 `styles.css`：64676 − 2514(CR) = 62162 = Release 资产字节，完全相等。
+- **数 CR 别用 `grep -c $'\r'`**（本机 Git Bash 会撒谎：报 3140 行含 CR 而实际 CR=0），一律 `python -c "print(open(p,'rb').read().count(13))"`。
+- **`Edit` 可以改 CRLF 文件**（多行 `old_string` 用 `\n` 也能匹配上）；但 **JS 里 `String.replace` 的替换串含 `$'` 会被当成「匹配点之后的全部文本」**，会把整个尾巴复制进去——补 SKILL.md 这类含 `$'\r'` 的文本一律用拼接而不要用 replace 模板。
 
 ## CSS 铁律
 - 上色用具体 hex/rgba（draw.io 蓝 `#167dff` + `rgba(22,125,255,0.12)`），别用 `var(--interactive-accent)` / `color-mix`。覆盖 mxClient 默认类补 `position:absolute; pointer-events:none`。
