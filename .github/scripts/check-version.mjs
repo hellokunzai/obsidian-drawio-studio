@@ -62,14 +62,27 @@ if (manifest && pkg && versions) {
   if (String(manifest.id).endsWith("plugin")) warnings.push(`manifest id 不应以 "plugin" 结尾`);
   if (/plugin/i.test(manifest.name)) warnings.push(`manifest name "${manifest.name}" 不应含 "Plugin"`);
   if (/obsidian/i.test(manifest.name)) warnings.push(`manifest name "${manifest.name}" 不应含 "Obsidian"`);
+  if (/^obsi/i.test(manifest.name)) warnings.push(`manifest name "${manifest.name}" 不应以 "Obsi" 开头`);
+  if (/dian$/i.test(manifest.name)) warnings.push(`manifest name "${manifest.name}" 不应以 "dian" 结尾`);
 
+  // ── 2b. description 硬红线（审核实测：命中即 Failed，必须当 error）──
+  // 「Obsidian」在描述里是冗余的——目录语境已隐含；同理 "This plugin…" 也属冗余。
   const desc = manifest.description ?? "";
+  if (/obsidian/i.test(desc)) {
+    errors.push(`manifest description 不得包含 "Obsidian"（目录语境已隐含，冗余即驳回）`);
+  }
+  if (/^\s*this (is a |plugin )/i.test(desc)) {
+    errors.push(`manifest description 不得以 "This plugin…" 开头（冗余）`);
+  }
   if (desc.length > 250) errors.push(`manifest description 超过 250 字符（当前 ${desc.length}）`);
-  if (!desc.trim().endsWith(".")) warnings.push("manifest description 应以句号结尾");
+  if (!/[.?!)]$/.test(desc.trim())) {
+    errors.push(`manifest description 必须以 . / ? / ! / ) 结尾（当前结尾 "${desc.trim().slice(-1)}"）`);
+  }
   if (/[^\x20-\x7E]/.test(desc)) warnings.push("manifest description 含非 ASCII 字符（官方要求英文）");
   if (!manifest.author) errors.push("manifest author 为空");
 
   notes.push(`当前版本 ${mv}，minAppVersion ${manifest.minAppVersion}`);
+  notes.push(`description（${desc.length} 字符）：${desc}`);
 }
 
 // ── 3. --tag 校验（发版时用）────────────────────────────────

@@ -97,8 +97,8 @@ npm run build                                                # 生产构建，�
 3. 打 tag 并推送（**tag 名就是版本号，不加 `v` 前缀**）：
 
    ```bash
-   git tag 0.18.1
-   git push origin 0.18.1
+   git tag 0.18.2
+   git push origin 0.18.2
    ```
 
 CI 会构建后创建 GitHub Release，附 `main.js` / `manifest.json` / `styles.css` 三件套。
