@@ -30,6 +30,7 @@
 - `git commit -F <file>` 的路径**必须是 Windows 形式**（`C:/...`）；POSIX `/c/...` 会被原生 git.exe 判成 `could not read log file`。
 - 本机**没装 `gh`**；看 Release / Actions 走 GitHub API（WebFetch）或 GitHub MCP connector。
 - **`rm` / `rm -rf` 被 shim 挡住**（退出 127），且 `rm -rf x && 真命令` 会在 rm 处短路。删目录用 python `shutil.rmtree`，或换成新临时目录名。
+- **同一条 Bash 命令可能被执行两次**（沙箱升级重试，日志里会带 `Sandbox bypassed (escalation-approved)`）。**首次的副作用会保留** → 第二次跑时 `git tag` 报 `already exists`、`git commit` 报 `nothing to commit`，极易误判成「标签早被人建过 / 环境坏了」。先看 `git reflog` + `git log` 再下结论；写命令时尽量幂等（`git diff --cached --quiet || git commit`）。
 - **无头截图可用**（Edge）：`msedge.exe --headless=new --no-sandbox --disable-gpu --force-device-scale-factor=2 --user-data-dir=<新临时目录> --virtual-time-budget=6000 --window-size=1060,620 --screenshot=<绝对路径>.png "file:///<绝对路径>.html"`，日志 `> log 2>&1`。2x 图，量 CSS 尺寸除以 2。探测时 x 必须落在目标内部。
 - 校验中文文案：minify 把非 ASCII 转义，**U+0080~U+00FF 走 `\xHH`（`·`→`\xB7`），更靠后的走 `\uXXXX`**；两种都要反转义再 `includes()`。
 - 看截图取证：无 PIL，纯 python + zlib 手写 PNG 解码（filter 0~4 逐行还原）；脚本在 `.workbuddy/tmp/`（ascii.py / map.py / measure-*.py）。
