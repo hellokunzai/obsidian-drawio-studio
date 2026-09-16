@@ -369,12 +369,19 @@ body.drawio-palette-resizing {
   overflow: hidden;
   position: relative;
   background-color: var(--background-primary);
+  /* 网格：updateGridBackground 把算出来的值写成 --drawio-grid-*；关掉网格时那几个
+     声明被摘掉，自动回落到 none / auto / 0 0 —— 所以 JS 侧不需要写 "none" / "" */
+  background-image: var(--drawio-grid-image, none);
+  background-size: var(--drawio-grid-size, auto);
+  background-position: var(--drawio-grid-pos, 0 0);
 }
 
 /* 页面视图：画布块按页面尺寸渲染，1px 描边标出纸面边界 */
 .drawio-graph-container.drawio-page-block {
-  /* 宽度 / 高度由 applyPageViewLayout 按「页面单位 × 缩放」写死，
-     这里声明 block 级 flex 项，避免被压扁 */
+  /* 宽度 / 高度由 applyPageViewLayout 按「页面单位 × 缩放」写成
+     --drawio-page-w / --drawio-page-h；这里声明 block 级 flex 项，避免被压扁 */
+  width: var(--drawio-page-w, auto);
+  height: var(--drawio-page-h, auto);
   flex: 0 0 auto;
   margin: auto;
   border: 1px solid #8a8f98;
@@ -871,6 +878,17 @@ body.drawio-palette-resizing {
   flex-shrink: 0;
 }
 
+/* 盖在色块上的透明原生取色框：只负责唤起系统取色器，
+   静态样式集中在这里（原先散在 FormatPanel#colorField 的内联赋值里） */
+.drawio-fmt-color input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+
 /* 下拉框 */
 .drawio-fmt-select {
   flex: 1;
@@ -1023,6 +1041,20 @@ body.drawio-palette-resizing {
   background: rgba(22, 125, 255, 0.12);
   color: #167dff;
   font-weight: 600;
+}
+
+/* B / I / U 三个字形预览按钮的修饰类。特异性必须与上面的 .active 同级（都是 0,3,0）
+   且写在它之后 —— 否则选中态那条 font-weight: 600 会把这里的 bold 盖掉 */
+.drawio-fmt-body .drawio-fmt-tbtn.drawio-fmt-tbtn-bold {
+  font-weight: bold;
+}
+
+.drawio-fmt-body .drawio-fmt-tbtn.drawio-fmt-tbtn-italic {
+  font-style: italic;
+}
+
+.drawio-fmt-body .drawio-fmt-tbtn.drawio-fmt-tbtn-underline {
+  text-decoration: underline;
 }
 
 .drawio-fmt-body .drawio-fmt-tbtn.icon {
@@ -1722,6 +1754,8 @@ body.drawio-palette-resizing {
 }
 
 .drawio-pagebar-tab.is-dragging {
+  /* 拖拽位移是算出来的 → 由 PageBar 写成 --drawio-tab-dx */
+  transform: translateX(var(--drawio-tab-dx, 0px));
   opacity: 0.65;
   background: var(--background-primary);
   border-radius: var(--radius-s, 4px);
@@ -1801,7 +1835,8 @@ body.drawio-palette-resizing {
   width: 2px;
   background: var(--interactive-accent);
   border-radius: 1px;
-  display: none;
+  /* 显隐改由 .drawio-hidden 工具类接管，这里不能再写 display: none，
+     否则摘掉工具类之后它仍然是隐藏的 */
   pointer-events: none;
 }
 

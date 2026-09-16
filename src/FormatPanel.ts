@@ -523,14 +523,15 @@ export class FormatPanel {
 
   /** 色块上色：纯色 / 竖向渐变 / 无填充棋盘格 */
   private paintSwatch(sw: HTMLElement, preset: StylePreset): void {
-    if (preset.noFill) {
-      sw.classList.add("is-none");
-      sw.style.background = "";
-    } else {
-      sw.style.background = preset.gradient
+    // 无填充时留空串，让 .is-none 的棋盘格透出来
+    // （统一赋「变量」而不是给两个分支各写一次字面量）
+    const bg = preset.noFill
+      ? ""
+      : preset.gradient
         ? `linear-gradient(180deg, ${preset.fill} 0%, ${preset.gradient} 100%)`
         : preset.fill;
-    }
+    sw.classList.toggle("is-none", !!preset.noFill);
+    sw.style.background = bg;
     sw.style.borderColor = preset.stroke;
   }
 
@@ -1048,15 +1049,10 @@ export class FormatPanel {
   ): HTMLElement {
     const wrap = h("div", "drawio-fmt-color");
     wrap.style.background = initial;
+    // 覆盖层的定位 / 透明 / 去边框等静态样式走 .drawio-fmt-color input（styles.css）
     const input = h("input") as HTMLInputElement;
     input.type = "color";
     input.value = initial;
-    input.style.position = "absolute";
-    input.style.inset = "0";
-    input.style.opacity = "0";
-    input.style.cursor = "pointer";
-    input.style.border = "none";
-    input.style.padding = "0";
     input.addEventListener("input", () => {
       wrap.style.background = input.value;
       onChange(input.value);
@@ -1196,10 +1192,21 @@ export class FormatPanel {
     active: boolean,
     onChange: (on: boolean) => void
   ): HTMLButtonElement {
-    const b = h("button", "drawio-fmt-tbtn" + (active ? " active" : ""), text) as HTMLButtonElement;
-    if (cls === "bold") b.style.fontWeight = "bold";
-    if (cls === "italic") b.style.fontStyle = "italic";
-    if (cls === "underline") b.style.textDecoration = "underline";
+    // 字形预览走修饰类（styles.css 的 .drawio-fmt-tbtn-*），别写内联样式。
+    // 「S」在改动前就没有字形预览样式，这里保持原样、不顺手补。
+    const glyph =
+      cls === "bold"
+        ? " drawio-fmt-tbtn-bold"
+        : cls === "italic"
+          ? " drawio-fmt-tbtn-italic"
+          : cls === "underline"
+            ? " drawio-fmt-tbtn-underline"
+            : "";
+    const b = h(
+      "button",
+      `drawio-fmt-tbtn${glyph}${active ? " active" : ""}`,
+      text
+    ) as HTMLButtonElement;
     b.addEventListener("click", () => {
       b.classList.toggle("active");
       onChange(b.classList.contains("active"));

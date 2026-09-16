@@ -67,8 +67,8 @@ export class FloatingPanel {
       ? FloatingPanel.clampGeometry(stored)
       : { x: 0, y: 0, w: opts.width, h: opts.height };
 
-    this.el = parent.createDiv({ cls: "drawio-toolwin" });
-    this.el.style.display = "none";
+    // 显隐走 .drawio-hidden 工具类；「显示」态由 .drawio-toolwin 自己的 display: flex 决定
+    this.el = parent.createDiv({ cls: "drawio-toolwin drawio-hidden" });
 
     const head = this.el.createDiv({ cls: "drawio-toolwin-head" });
     this.titleEl = head.createSpan({
@@ -130,7 +130,7 @@ export class FloatingPanel {
   show(): void {
     if (this.open) return;
     this.open = true;
-    this.el.style.display = "flex";
+    this.el.classList.remove("drawio-hidden");
     this.applyGeometry();
     this.bringToFront();
   }
@@ -138,7 +138,7 @@ export class FloatingPanel {
   hide(): void {
     if (!this.open) return;
     this.open = false;
-    this.el.style.display = "none";
+    this.el.classList.add("drawio-hidden");
     this.endDrag();
   }
 

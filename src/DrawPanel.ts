@@ -300,20 +300,19 @@ export class DrawPanel {
     this.pageSizeSelect.addEventListener("change", () => {
       const v = this.pageSizeSelect.value;
       if (v === CUSTOM_PRESET) {
-        this.customSizeRow.style.display = "";
+        this.customSizeRow.classList.remove("drawio-hidden");
         this.host.patchSettings({ pageSizePreset: CUSTOM_PRESET });
         return;
       }
       const [w, hh] = v.split("x").map(Number);
-      this.customSizeRow.style.display = "none";
+      this.customSizeRow.classList.add("drawio-hidden");
       this.host.patchSettings({ pageSizePreset: v, pageWidth: w, pageHeight: hh });
     });
     sizeRow.appendChild(this.pageSizeSelect);
     sizeBody.appendChild(sizeRow);
 
-    // 自定义宽 × 高（仅在选了「自定义…」时出现）
-    this.customSizeRow = h("div", "drawio-fmt-row");
-    this.customSizeRow.style.display = "none";
+    // 自定义宽 × 高（仅在选了「自定义…」时出现）：显隐走 .drawio-hidden 工具类
+    this.customSizeRow = h("div", "drawio-fmt-row drawio-hidden");
     const wNum = this.numberField("mm", MIN_PAGE_MM, MAX_PAGE_MM);
     this.pageWidthInput = wNum.input;
     this.pageWidthInput.addEventListener("change", () => {
@@ -562,7 +561,7 @@ export class DrawPanel {
 
     const isPreset = PAGE_PRESETS.some((p) => p.v === s.pageSizePreset);
     this.pageSizeSelect.value = isPreset ? s.pageSizePreset : CUSTOM_PRESET;
-    this.customSizeRow.style.display = isPreset ? "none" : "";
+    this.customSizeRow.classList.toggle("drawio-hidden", isPreset);
     this.setNumber(this.pageWidthInput, s.pageWidth);
     this.setNumber(this.pageHeightInput, s.pageHeight);
     this.orientRadios.forEach((r) => {

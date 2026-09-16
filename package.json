@@ -1,6 +1,6 @@
 {
   "name": "obsidian-drawio-editor",
-  "version": "0.18.2",
+  "version": "0.18.3",
   "description": "Draw.io compatible flowchart editor for Obsidian - no external dependency",
   "main": "main.js",
   "scripts": {

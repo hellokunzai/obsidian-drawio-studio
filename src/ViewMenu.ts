@@ -41,8 +41,10 @@ export class ViewMenu {
     this.trigger = trigger;
     this.getItems = getItems;
 
-    this.menuEl = document.body.createDiv({ cls: "drawio-viewmenu" });
-    this.menuEl.style.display = "none";
+    // 显隐走 .drawio-hidden 工具类（display: none !important），别写内联样式
+    this.menuEl = document.body.createDiv({
+      cls: "drawio-viewmenu drawio-hidden",
+    });
 
     trigger.addEventListener("click", (e) => {
       e.preventDefault();
@@ -64,7 +66,7 @@ export class ViewMenu {
     if (activeMenu && activeMenu !== this) activeMenu.close();
 
     this.render();
-    this.menuEl.style.display = "block";
+    this.menuEl.classList.remove("drawio-hidden");
     this.place();
     this.open = true;
     activeMenu = this;
@@ -91,7 +93,7 @@ export class ViewMenu {
   close(): void {
     if (!this.open) return;
     this.open = false;
-    this.menuEl.style.display = "none";
+    this.menuEl.classList.add("drawio-hidden");
     this.trigger.removeClass("is-open");
 
     if (this.outsidePointer) {

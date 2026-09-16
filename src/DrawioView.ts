@@ -26,6 +26,7 @@ import {
   MAX_PALETTE_WIDTH,
 } from "./settings";
 import { TextEditModal } from "./TextEditModal";
+import { setCssVars, clearCssVars } from "./cssVars";
 import { inflate } from "pako";
 import { t, tOr } from "./i18n";
 import { FormatPanel } from "./FormatPanel";
@@ -1360,13 +1361,16 @@ export class DrawioView extends FileView {
       const pageH = landscape ? w : h;
 
       // 注：本构建里 mxGraph.resizeContainer 默认为 false，
-      // sizeDidChange() 不会回写容器尺寸，所以这里设的宽高不会被抹掉。
-      container.style.width = `${Math.round(pageW * scale)}px`;
-      container.style.height = `${Math.round(pageH * scale)}px`;
+      // sizeDidChange() 不会回写容器尺寸，所以这里给的宽高不会被抹掉。
+      // 尺寸是算出来的 → 落成自定义属性，由 .drawio-page-block 的 var() 消费。
+      setCssVars(container, {
+        "--drawio-page-w": `${Math.round(pageW * scale)}px`,
+        "--drawio-page-h": `${Math.round(pageH * scale)}px`,
+      });
       container.addClass("drawio-page-block");
     } else {
-      container.style.width = "100%";
-      container.style.height = "100%";
+      // 摘掉两个变量即回落到 .drawio-graph-container 自己的 width/height: 100%
+      clearCssVars(container, "--drawio-page-w", "--drawio-page-h");
       container.removeClass("drawio-page-block");
     }
 
@@ -1507,8 +1511,10 @@ export class DrawioView extends FileView {
 
     // 菜单元素：挂在 body 上（position: fixed），可溢出画布容器
     if (!this.ctxMenuEl) {
-      this.ctxMenuEl = document.body.createDiv({ cls: "drawio-ctx-menu" });
-      this.ctxMenuEl.style.display = "none";
+      // 显隐走 .drawio-hidden 工具类（默认隐藏，右键时才露出）
+      this.ctxMenuEl = document.body.createDiv({
+        cls: "drawio-ctx-menu drawio-hidden",
+      });
       // 统一用事件委托处理菜单项点击
       this.ctxMenuEl.addEventListener("click", (e: MouseEvent) => {
         const item = (e.target as HTMLElement).closest(
@@ -1633,7 +1639,7 @@ export class DrawioView extends FileView {
     const menu = this.ctxMenuEl;
     if (!menu) return;
 
-    menu.style.display = "block";
+    menu.classList.remove("drawio-hidden");
     const mw = menu.offsetWidth;
     const mh = menu.offsetHeight;
     let x = clientX;
@@ -1681,7 +1687,7 @@ export class DrawioView extends FileView {
 
   /** 关闭菜单并注销监听 */
   private closeCtxMenu(): void {
-    if (this.ctxMenuEl) this.ctxMenuEl.style.display = "none";
+    if (this.ctxMenuEl) this.ctxMenuEl.classList.add("drawio-hidden");
     this.ctxTargetCell = null;
     this.removeCtxOutsideListeners();
   }
@@ -2393,9 +2399,12 @@ export class DrawioView extends FileView {
     const container = this.graphContainer;
     // 容器被折叠 / 面板重排时宽度会变成 0，此时先撤掉网格，等布局稳定再画
     if (!this.plugin.settings.showGrid || !container.clientWidth) {
-      container.style.backgroundImage = "none";
-      container.style.backgroundSize = "";
-      container.style.backgroundPosition = "";
+      clearCssVars(
+        container,
+        "--drawio-grid-image",
+        "--drawio-grid-size",
+        "--drawio-grid-pos"
+      );
       return;
     }
 
@@ -2418,11 +2427,14 @@ export class DrawioView extends FileView {
         ? "rgba(255, 255, 255, 0.08)"
         : "rgba(0, 0, 0, 0.08)";
 
-    container.style.backgroundImage =
-      `linear-gradient(to right, ${line} 1px, transparent 1px), ` +
-      `linear-gradient(to bottom, ${line} 1px, transparent 1px)`;
-    container.style.backgroundSize = `${size}px ${size}px`;
-    container.style.backgroundPosition = `${offsetX}px ${offsetY}px`;
+    // 网格是算出来的（随缩放 / 平移变化）→ 写成自定义属性，由 styles.css 的 var() 消费
+    setCssVars(container, {
+      "--drawio-grid-image":
+        `linear-gradient(to right, ${line} 1px, transparent 1px), ` +
+        `linear-gradient(to bottom, ${line} 1px, transparent 1px)`,
+      "--drawio-grid-size": `${size}px ${size}px`,
+      "--drawio-grid-pos": `${offsetX}px ${offsetY}px`,
+    });
   }
 
   // ============================================================ 多页（page bar）

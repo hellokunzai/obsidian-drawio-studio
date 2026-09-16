@@ -1,5 +1,6 @@
 import { t } from "./i18n";
 import { setSvgMarkup } from "./svg";
+import { setCssVars, clearCssVars } from "./cssVars";
 
 /** 页面栏只关心「标识 + 显示名」，模型数据由宿主（DrawioView）保管 */
 export interface PageBarPage {
@@ -97,7 +98,9 @@ export class PageBar {
 
     this.tabsEl = this.rootEl.createDiv({ cls: "drawio-pagebar-tabs" });
 
-    this.dropEl = this.tabsEl.createDiv({ cls: "drawio-pagebar-drop" });
+    this.dropEl = this.tabsEl.createDiv({
+      cls: "drawio-pagebar-drop drawio-hidden",
+    });
 
     const addBtn = this.rootEl.createEl("button", {
       cls: "clickable-icon drawio-pagebar-add",
@@ -116,9 +119,10 @@ export class PageBar {
       this.openMenu(e.clientX, e.clientY, this.host.getActiveIndex());
     });
 
-    // 菜单一次性建好挂在 body 上，随开随用
-    this.menuEl = document.body.createDiv({ cls: "drawio-pagebar-menu-list" });
-    this.menuEl.style.display = "none";
+    // 菜单一次性建好挂在 body 上，随开随用（显隐走 .drawio-hidden 工具类）
+    this.menuEl = document.body.createDiv({
+      cls: "drawio-pagebar-menu-list drawio-hidden",
+    });
   }
 
   /** 重建页签（页数 / 名称 / 活动页变化后调用） */
@@ -220,7 +224,8 @@ export class PageBar {
     }
     if (!d.moved) return;
 
-    d.el.style.transform = `translateX(${dx}px)`;
+    // 位移是算出来的 → 落成自定义属性，由 .is-dragging 的 var() 消费
+    setCssVars(d.el, { "--drawio-tab-dx": `${dx}px` });
     this.placeDropIndicator(this.slotAt(e.clientX));
   }
 
@@ -231,7 +236,7 @@ export class PageBar {
     if (!d.el) return;
 
     if (d.moved) {
-      d.el.style.transform = "";
+      clearCssVars(d.el, "--drawio-tab-dx");
       d.el.removeClass("is-dragging");
       // slotAt 的坐标系是「抽掉被拖页签后的数组」，正好等价于
       // splice(from,1) 之后要插入的下标，因此不能再做 from/to 补偿
@@ -254,11 +259,11 @@ export class PageBar {
       this.dragUp = null;
     }
     if (this.drag) {
-      this.drag.el.style.transform = "";
+      clearCssVars(this.drag.el, "--drawio-tab-dx");
       this.drag.el.removeClass("is-dragging");
       this.drag = null;
     }
-    this.dropEl.style.display = "none";
+    this.dropEl.classList.add("drawio-hidden");
   }
 
   /** 非拖拽页签的包围盒（用于计算插入位置） */
@@ -287,7 +292,7 @@ export class PageBar {
     else left = rects[slot].left - strip.left;
 
     this.dropEl.style.left = `${left + this.tabsEl.scrollLeft}px`;
-    this.dropEl.style.display = "block";
+    this.dropEl.classList.remove("drawio-hidden");
   }
 
   // ------------------------------------------------------------------ 重命名
@@ -400,7 +405,7 @@ export class PageBar {
     });
 
     // 量尺寸做视口内钳制
-    this.menuEl.style.display = "block";
+    this.menuEl.classList.remove("drawio-hidden");
     const mw = this.menuEl.offsetWidth;
     const mh = this.menuEl.offsetHeight;
     let x = clientX;
@@ -444,7 +449,7 @@ export class PageBar {
   }
 
   private closeMenu(): void {
-    this.menuEl.style.display = "none";
+    this.menuEl.classList.add("drawio-hidden");
     this.removeOutsideListeners();
   }
 }
