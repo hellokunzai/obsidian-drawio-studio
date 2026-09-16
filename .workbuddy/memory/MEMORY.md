@@ -13,7 +13,8 @@
 - 上架前先探 ID：`https://community.obsidian.md/plugins/<id>` 返「Plugin not found」= 空闲。表单只在点「提交」时才校验。
 - **`drawio` 扩展名冲突（未解决，仅 README 披露）**：对方也 `registerExtensions(['drawio'])`；视图注册表命中重复扩展名即 `throw`，而 `Plugin.registerExtensions` 不捕获 → **后加载的插件整体 `onload` 抛错、加载失败**。按字母序我们排在 `drawio-editor` 之后。
 - 内部标识符：view type `drawio-studio-view`、容器类 `.drawio-studio-container`，**含 styles.css 里的 `[data-type=…]` 选择器**（漏改会让「视图铺满叶子」的修复静默失效）。
-- **刻意保留 `obsidian-drawio-editor` 字样**：`package.json#name` 与 mxfile `host=`（`DrawioView.ts:2802`、`main.ts:162`）——属仓库/NPM 包名，与插件 id 无关；`host` 会写进用户图表文件，保持不变让新旧文件无差异。GitHub 仓库名亦未改。
+- **刻意保留 `obsidian-drawio-editor` 字样**：`package.json#name` 与 mxfile `host=`（`DrawioView.ts:2802`、`main.ts:162`）——属仓库/NPM 包名，与插件 id 无关；`host` 会写进用户图表文件，保持不变让新旧文件无差异。
+- **GitHub 仓库已改名（2026-09-16 发现）**：`hellokunzai/obsidian-drawio-editor` → **`hellokunzai/obsidian-drawio-studio`**；本地 `origin` 已 `set-url` 到新地址。旧地址仍 302 跳转，但每次 push 都打 "This repository moved" 警告。**上架表单里的 repo 字段若还填旧名需同步改**（validator 会校验 repo 存在性）。
 - vault 插件目录须为 `.obsidian/plugins/drawio-studio/`；旧 view type 的已打开标签页下次启动会被丢弃一次。
 
 ## 技术栈与工作流
@@ -76,8 +77,8 @@
 
 ## 上架合规（v0.18.0 修代码级，v0.18.2 修 description）
 - v0.17.2 检查 → v0.18.0 全修：`registerExtensions(["drawio"])` 只留一个（`.xml` / `.drawio.svg` 改走右键 `file-menu`「Open as diagram」兜底，`isDrawioCompatible` + `openInDrawioView`）；`mxStylesheetCodec.allowEval=false` + `mxDefaultToolbarCodec.allowEval=false`；**18 处 `innerHTML` + 2 处 `outerHTML` 读全迁到 `src/svg.ts#setSvgMarkup()`**；`console.log` 删、`author` 填 `hellokunzai`、`vault.modify`→`vault.process`、`createElement("script")`→`createEl`、`arguments`→rest、`setTimeout`→`window.*`。官方 eslint recommended：errors 1637→1609、warnings 206→175；`no-inner-html` 17→0、`no-unsanitized/property` 14→0。
-- **description 不得含 "Obsidian" 字样**（审核实测驳回，2026-09-16）：目录语境已隐含，写了即 Failed。现文案 = “Edit and view draw.io diagrams directly in your vault. …”。
-- 已解除：`.github/`（4 个 workflow + `check-version.mjs`）已提交；`git tag 0.18.0` 已推；`release.yml` 自动建 Release（`draft:false`，三件套齐）。路径是「推 tag → Actions 自动发版」，**无需本地 gh**。
+- **description 不得含 "Obsidian" 字样**（审核实测驳回，2026-09-16）：目录语境已隐含，写了即 Failed。现文案 = “Edit and view draw.io diagrams directly in your vault. …”（136 字符）。`check-version.mjs` 已把它做成 **error 级断言**（含 obsidian / `This plugin…` 开头 / >250 字符 / 结尾非 `.?!` 或 `)`）。
+- 发版路径：**推 tag → `release.yml` 用 checkout 到的仓库内 `manifest.json` 原样当资产上传**（不另生成）+ `--generate-notes`，**无需本地 gh**。已发：0.18.0 / **0.18.1 / 0.18.2**（2026-09-16 推 `2a8ff6c` + 附注 tag `0.18.2`，Release 三件套齐、`draft:false`）。发版前先跑 `check-version.mjs --tag <版本>` 守门（CI 里也有这一步）。
 - 仓库清理（已做）：`.workbuddy/tmp/` 与 `.env-check.txt` 用 `git rm --cached` 移出版本控制（本地保留）；`.gitignore` 收窄为 `.workbuddy/tmp/`。`.workbuddy/memory/` 与 `prototypes/` **仍跟踪**。
 - `package-lock.json` 根版本长期停在 `0.1.0`；实测这种「仅根版本不一致、依赖范围一致」**不会让 `npm ci` 失败**，已用 `npm install --package-lock-only --ignore-scripts` 规范化。改版本号后建议顺手跑一次。
 - **故意保留**（超范围 / 大改有回归风险）：`no-static-styles-assignment` 34 处、本地 `h()` 的 `prefer-create-el` 2 处、`settings-tab/prefer-setting-definitions` 1 处、`@typescript-eslint` 的 `any` 警告约 1500 条（mxGraph 按设计 `any` 密集）。
